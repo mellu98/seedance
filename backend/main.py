@@ -372,11 +372,21 @@ async def delete_project(project_id: str):
 
 
 # ── Static frontend (web export) ─────────────────────────────────────────────
-import os as _os
-_dist_path = _os.path.join(_os.path.dirname(__file__), "..", "frontend", "dist")
+from pathlib import Path as _Path
+_dist_path = str((_Path(__file__).resolve().parent / ".." / "frontend" / "dist").resolve())
 if _os.path.isdir(_dist_path):
     from fastapi.staticfiles import StaticFiles
     app.mount("/", StaticFiles(directory=_dist_path, html=True), name="static")
+
+@app.get("/api/debug")
+async def debug_paths():
+    return {
+        "cwd": _os.getcwd(),
+        "file": __file__,
+        "dist_path": _dist_path,
+        "dist_exists": _os.path.isdir(_dist_path),
+        "parent_listing": _os.listdir(str(_Path(__file__).resolve().parent / "..")) if _os.path.isdir(str(_Path(__file__).resolve().parent / "..")) else None,
+    }
 
 
 @app.delete("/api/projects", response_model=OkResponse)
