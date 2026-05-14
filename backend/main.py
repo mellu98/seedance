@@ -163,7 +163,6 @@ def now_iso() -> str:
 
 async def generate_seedance_storyboard(request: GenerateScenesRequest) -> GeneratedStoryboard:
     if not OPENROUTER_API_KEY or OPENROUTER_API_KEY == "mock":
-        # ── Mock mode: deterministic realistic storyboard for quick testing ──
         scenes: List[Scene] = []
         for i in range(1, request.num_scenes + 1):
             is_last = i == request.num_scenes
@@ -276,7 +275,6 @@ async def generate_seedance_storyboard(request: GenerateScenesRequest) -> Genera
     if not raw_content:
         raise HTTPException(status_code=502, detail="Risposta vuota da OpenRouter")
 
-    # Strip possible markdown fences
     cleaned = raw_content.strip()
     if cleaned.startswith("```"):
         cleaned = cleaned[3:]
@@ -296,7 +294,6 @@ async def generate_seedance_storyboard(request: GenerateScenesRequest) -> Genera
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Validazione output fallita: {exc}")
 
-    # Force durations and ensure scene count / end transition
     if len(storyboard.scenes) != request.num_scenes:
         raise HTTPException(
             status_code=502,
@@ -345,7 +342,6 @@ async def generate_scenes(payload: GenerateScenesRequest):
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Errore MongoDB: {exc}")
 
-    # Remove Mongo _id if present (shouldn't be because we use custom id field)
     doc.pop("_id", None)
     return doc
 
@@ -369,14 +365,6 @@ async def delete_project(project_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Progetto non trovato")
     return {"ok": True}
-
-
-# ── Static frontend (web export) ─────────────────────────────────────────────
-import os as _os
-_dist_path = _os.path.join(_os.path.dirname(__file__), "..", "frontend", "dist")
-if _os.path.isdir(_dist_path):
-    from fastapi.staticfiles import StaticFiles
-    app.mount("/", StaticFiles(directory=_dist_path, html=True), name="static")
 
 
 @app.delete("/api/projects", response_model=OkResponse)
