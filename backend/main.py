@@ -367,6 +367,13 @@ async def delete_project(project_id: str):
     return {"ok": True}
 
 
+from fastapi.staticfiles import StaticFiles
+import os as _os
+_dist_path = _os.path.join(_os.path.dirname(__file__), "..", "frontend", "dist")
+if _os.path.isdir(_dist_path):
+    app.mount("/", StaticFiles(directory=_dist_path, html=True), name="static")
+
+
 @app.delete("/api/projects", response_model=OkResponse)
 async def clear_projects():
     try:
